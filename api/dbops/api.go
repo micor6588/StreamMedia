@@ -1,8 +1,8 @@
 package dbops
 
 import (
-	"StreamMedia/video_server/api/defs"
-	"StreamMedia/video_server/api/utils"
+	"StreamMedia/api/defs"
+	"StreamMedia/api/utils"
 	"database/sql"
 	"log"
 	"time"
@@ -10,9 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// AddUserCredential 添加用户信息
 func AddUserCredential(loginName string, pwd string) error {
-	//在数据库查找用户名和密码
 	stmtIns, err := dbConn.Prepare("INSERT INTO users (login_name, pwd) VALUES (?, ?)")
 	if err != nil {
 		return err
@@ -27,9 +25,7 @@ func AddUserCredential(loginName string, pwd string) error {
 	return nil
 }
 
-// GetUserCredential 获取用户信息
 func GetUserCredential(loginName string) (string, error) {
-	//在数据库查找登录名
 	stmtOut, err := dbConn.Prepare("SELECT pwd FROM users WHERE login_name = ?")
 	if err != nil {
 		log.Printf("%s", err)
@@ -38,7 +34,7 @@ func GetUserCredential(loginName string) (string, error) {
 
 	var pwd string
 	err = stmtOut.QueryRow(loginName).Scan(&pwd)
-	if err != nil && err != sql.ErrNoRows { //如贵错误为空，和没有查询到结果
+	if err != nil && err != sql.ErrNoRows {
 		return "", err
 	}
 
@@ -47,9 +43,8 @@ func GetUserCredential(loginName string) (string, error) {
 	return pwd, nil
 }
 
-// DeleteUser 删除用户信息
 func DeleteUser(loginName string, pwd string) error {
-	stmtDel, err := dbConn.Prepare("DELETE FROM users WHERE login_name = ? AND pwd = ?")
+	stmtDel, err := dbConn.Prepare("DELETE FROm users WHERE login_name=? AND pwd=?")
 	if err != nil {
 		log.Printf("DeleteUser error: %s", err)
 		return err
@@ -64,7 +59,6 @@ func DeleteUser(loginName string, pwd string) error {
 	return nil
 }
 
-// AddNewVideo 添加视频信息
 func AddNewVideo(aid int, name string) (*defs.VideoInfo, error) {
 	// create uuid
 	vid, err := utils.NewUUID()
@@ -73,9 +67,9 @@ func AddNewVideo(aid int, name string) (*defs.VideoInfo, error) {
 	}
 
 	t := time.Now()
-	ctime := t.Format("Jan 02 2006, 15:04:05") // M D y, HH:MM:SS
+	ctime := t.Format("Jan 02 2006, 15:04:05")
 	stmtIns, err := dbConn.Prepare(`INSERT INTO video_info 
-	(id, author_id, name, display_ctime) VALUES(?, ?, ?, ?)`)
+		(id, author_id, name, display_ctime) VALUES(?, ?, ?, ?)`)
 	if err != nil {
 		return nil, err
 	}
@@ -85,16 +79,14 @@ func AddNewVideo(aid int, name string) (*defs.VideoInfo, error) {
 		return nil, err
 	}
 
-	res := &defs.VideoInfo{Id: vid, AuthorId: aid, Name: name, DisplayCtime: ctime} //初始化视频信息
+	res := &defs.VideoInfo{Id: vid, AuthorId: aid, Name: name, DisplayCtime: ctime}
 
 	defer stmtIns.Close()
 	return res, nil
 }
 
-// GetVideoInfo 获取视频信息
 func GetVideoInfo(vid string) (*defs.VideoInfo, error) {
-	// create uuid
-	stmtOut, err := dbConn.Prepare("SELECT  author_id, name, display_ctime FROM video_info WHERE id=?")
+	stmtOut, err := dbConn.Prepare("SELECT author_id, name, display_ctime FROM video_info WHERE id=?")
 
 	var aid int
 	var dct string
@@ -116,9 +108,8 @@ func GetVideoInfo(vid string) (*defs.VideoInfo, error) {
 	return res, nil
 }
 
-// DeleteVideoInfo 删除视频信息
 func DeleteVideoInfo(vid string) error {
-	stmtDel, err := dbConn.Prepare("DELETE FROM video_info WHERE id = ?")
+	stmtDel, err := dbConn.Prepare("DELETE FROM video_info WHERE id=?")
 	if err != nil {
 		return err
 	}
@@ -132,14 +123,13 @@ func DeleteVideoInfo(vid string) error {
 	return nil
 }
 
-// AddNewComments 添加评论信息
 func AddNewComments(vid string, aid int, content string) error {
 	id, err := utils.NewUUID()
 	if err != nil {
 		return err
 	}
 
-	stmtIns, err := dbConn.Prepare("INSERT INTO comments (id, video_id, author_id, content) VALUES (?, ?, ?, ?)")
+	stmtIns, err := dbConn.Prepare("INSERT INTO comments (id, video_id, author_id, content) values (?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -153,13 +143,10 @@ func AddNewComments(vid string, aid int, content string) error {
 	return nil
 }
 
-// ListComments 显示评论列表
 func ListComments(vid string, from, to int) ([]*defs.Comment, error) {
-	// 从数据库中获取评论的相关信息
-	stmtOut, err := dbConn.Prepare(`SELECT comments.id, users.login_name, comments.content FROM comments
+	stmtOut, err := dbConn.Prepare(` SELECT comments.id, users.Login_name, comments.content FROM comments
 		INNER JOIN users ON comments.author_id = users.id
-		WHERE comments.video_id = ? AND comments.time > FROM_UNIXTIME(?) AND comments.time <= FROM_UNIXTIME(?)
-		ORDER BY comments.time DESC`)
+		WHERE comments.video_id = ? AND comments.time > FROM_UNIXTIME(?) AND comments.time <= FROM_UNIXTIME(?)`)
 
 	var res []*defs.Comment
 
@@ -177,7 +164,6 @@ func ListComments(vid string, from, to int) ([]*defs.Comment, error) {
 		c := &defs.Comment{Id: id, VideoId: vid, Author: name, Content: content}
 		res = append(res, c)
 	}
-
 	defer stmtOut.Close()
 
 	return res, nil

@@ -1,17 +1,16 @@
 package dbops
 
 import (
+	"StreamMedia/api/defs"
 	"database/sql"
-	"golang-streaming/video_server/api/defs"
 	"log"
 	"strconv"
 	"sync"
 )
 
-// InsertSession 插入一个session
 func InsertSession(sid string, ttl int64, uname string) error {
 	ttlstr := strconv.FormatInt(ttl, 10)
-	stmtIns, err := dbConn.Prepare("INSERT INTO sessions (session_id, TTL, login_name) VALUE (?, ?, ?)")
+	stmtIns, err := dbConn.Prepare("INSERT INTO sessions (session_id, TTL, login_name) VALUES (?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -27,7 +26,7 @@ func InsertSession(sid string, ttl int64, uname string) error {
 
 func RetrieveSession(sid string) (*defs.SimpleSession, error) {
 	ss := &defs.SimpleSession{}
-	stmtOut, err := dbConn.Prepare("SELECT TTL, login_name from sessions WHERE session_id = ?")
+	stmtOut, err := dbConn.Prepare("SELECT TTL, login_name FROM sessions WHERE session_id=?")
 	if err != nil {
 		return nil, err
 	}
@@ -68,16 +67,17 @@ func RetrieveAllSessions() (*sync.Map, error) {
 		var id string
 		var ttlstr string
 		var login_name string
-		if err := rows.Scan(&id, &ttlstr, &login_name); err != nil {
-			log.Printf("retrieve sessions error: %s", err)
+		if er := rows.Scan(&id, &ttlstr, &login_name); er != nil {
+			log.Printf("retrive sessions error: %s", er)
 			break
 		}
 
 		if ttl, err1 := strconv.ParseInt(ttlstr, 10, 64); err1 == nil {
 			ss := &defs.SimpleSession{Username: login_name, TTL: ttl}
 			m.Store(id, ss)
-			log.Printf("session id: %s, ttl: %d", id, ss.TTL)
+			log.Printf(" session id: %s, ttl: %d", id, ss.TTL)
 		}
+
 	}
 
 	return m, nil
