@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+// InsertSession 插入session
 func InsertSession(sid string, ttl int64, uname string) error {
 	ttlstr := strconv.FormatInt(ttl, 10)
 	stmtIns, err := dbConn.Prepare("INSERT INTO sessions (session_id, TTL, login_name) VALUES (?, ?, ?)")
@@ -24,6 +25,7 @@ func InsertSession(sid string, ttl int64, uname string) error {
 	return nil
 }
 
+// RetrieveSession 从数据库当中获取session
 func RetrieveSession(sid string) (*defs.SimpleSession, error) {
 	ss := &defs.SimpleSession{}
 	stmtOut, err := dbConn.Prepare("SELECT TTL, login_name FROM sessions WHERE session_id=?")
@@ -49,6 +51,7 @@ func RetrieveSession(sid string) (*defs.SimpleSession, error) {
 	return ss, nil
 }
 
+// RetrieveAllSessions 获取所有用户的session
 func RetrieveAllSessions() (*sync.Map, error) {
 	m := &sync.Map{}
 	stmtOut, err := dbConn.Prepare("SELECT * FROM sessions")
@@ -83,6 +86,7 @@ func RetrieveAllSessions() (*sync.Map, error) {
 	return m, nil
 }
 
+// DeleteSession 删除对应用户的session
 func DeleteSession(sid string) error {
 	stmtOut, err := dbConn.Prepare("DELETE FROM sessions WHERE session_id = ?")
 	if err != nil {

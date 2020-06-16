@@ -14,15 +14,18 @@ func init() {
 	sessionMap = &sync.Map{}
 }
 
+// nowInMilli 当前时间
 func nowInMilli() int64 {
 	return time.Now().UnixNano() / 1000000
 }
 
+// deleteExpiredSession 删除过期的session
 func deleteExpiredSession(sid string) {
 	sessionMap.Delete(sid)
 	dbops.DeleteSession(sid)
 }
 
+// LoadSessionsFromDB 从数据库中加载session
 func LoadSessionsFromDB() {
 	r, err := dbops.RetrieveAllSessions()
 	if err != nil {
@@ -36,6 +39,7 @@ func LoadSessionsFromDB() {
 	})
 }
 
+// GenerateNewSessionId 生成新的sessionid
 func GenerateNewSessionId(un string) string {
 	id, _ := utils.NewUUID()
 	ct := nowInMilli()
@@ -48,6 +52,7 @@ func GenerateNewSessionId(un string) string {
 	return id
 }
 
+// IsSessionExpired 判断session是否过期
 func IsSessionExpired(sid string) (string, bool) {
 	ss, ok := sessionMap.Load(sid)
 	if ok {
